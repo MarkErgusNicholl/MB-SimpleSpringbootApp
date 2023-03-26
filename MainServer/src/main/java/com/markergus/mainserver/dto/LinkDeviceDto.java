@@ -1,5 +1,8 @@
 package com.markergus.mainserver.dto;
 
+import lombok.ToString;
+
+@ToString
 public class LinkDeviceDto {
 
     private String userId;
