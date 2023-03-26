@@ -22,7 +22,6 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final DeviceRepository deviceRepository;
-
     private final ModelMapper modelMapper;
 
     @Autowired
@@ -32,7 +31,7 @@ public class CustomerService {
         this.modelMapper = modelMapper;
     }
 
-    public CustomerDto createUser(CustomerCreationDto customerCreationDto) throws DuplicateEntryException {
+    public CustomerDto createCustomer(CustomerCreationDto customerCreationDto) throws DuplicateEntryException {
         if (customerRepository.existsByUserId(customerCreationDto.getUserId())) {
             throw new DuplicateEntryException();
         }
@@ -43,7 +42,7 @@ public class CustomerService {
         return modelMapper.map(result, CustomerDto.class);
     }
 
-    public CustomerDto updateUser(String userId, CustomerUpdateDto customerUpdateDto) throws NotFoundException {
+    public CustomerDto updateCustomer(String userId, CustomerUpdateDto customerUpdateDto) throws NotFoundException {
         if (!customerRepository.existsByUserId(userId)) {
             throw new NotFoundException();
         }
@@ -56,10 +55,13 @@ public class CustomerService {
     /**
      * Transactional annotation especially important here, to keep whole function ACID
      */
-    @Transactional(rollbackFor = DuplicateEntryException.class)
+    @Transactional(rollbackFor = Exception.class)
     public CustomerDto linkDevice(LinkDeviceDto linkDeviceDto) throws NotFoundException, DuplicateEntryException {
         if (!customerRepository.existsByUserId(linkDeviceDto.getUserId())) {
             throw new NotFoundException();
+        }
+        if (deviceRepository.existsByDeviceId(linkDeviceDto.getDeviceId())) {
+            throw new DuplicateEntryException();
         }
         Customer customer = customerRepository.findByUserId(linkDeviceDto.getUserId());
         if (customer.getDevice() != null) {

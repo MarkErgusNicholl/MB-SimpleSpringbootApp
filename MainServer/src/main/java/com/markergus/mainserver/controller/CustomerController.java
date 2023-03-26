@@ -7,7 +7,6 @@ import com.markergus.mainserver.dto.LinkDeviceDto;
 import com.markergus.mainserver.exceptions.DuplicateEntryException;
 import com.markergus.mainserver.exceptions.NotFoundException;
 import com.markergus.mainserver.service.CustomerService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +28,7 @@ public class CustomerController {
     @PostMapping(value = "/create")
     public CustomerDto createUser(@RequestBody CustomerCreationDto customerCreationDto) {
         try {
-            return customerService.createUser(customerCreationDto);
+            return customerService.createCustomer(customerCreationDto);
         } catch (DuplicateEntryException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Duplicate User Id found in customer table", e);
         }
@@ -38,7 +37,7 @@ public class CustomerController {
     @PutMapping(value = "/update/{userId}")
     public CustomerDto updateUser(@PathVariable String userId, @RequestBody CustomerUpdateDto customerUpdateDto) {
         try {
-            return customerService.updateUser(userId, customerUpdateDto);
+            return customerService.updateCustomer(userId, customerUpdateDto);
         } catch (NotFoundException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("No Customer with user id: %s found", userId), e);
         }
@@ -51,7 +50,7 @@ public class CustomerController {
         } catch (NotFoundException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("No Customer with user id: %s found", linkDeviceDto.getUserId()), e);
         } catch (DuplicateEntryException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("Existing device already linked with customer"), e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Existing device already linked with a customer", e);
         }
     }
 
