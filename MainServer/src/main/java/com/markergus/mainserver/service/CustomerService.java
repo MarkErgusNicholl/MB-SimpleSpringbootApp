@@ -1,21 +1,21 @@
 package com.markergus.mainserver.service;
 
-import com.markergus.mainserver.dto.CustomerCreationDto;
-import com.markergus.mainserver.dto.CustomerDto;
-import com.markergus.mainserver.dto.CustomerUpdateDto;
-import com.markergus.mainserver.dto.LinkDeviceDto;
+import com.markergus.mainserver.dto.*;
 import com.markergus.mainserver.entity.Customer;
 import com.markergus.mainserver.entity.Device;
 import com.markergus.mainserver.exceptions.DuplicateEntryException;
+import com.markergus.mainserver.exceptions.NoDeviceLinkedException;
 import com.markergus.mainserver.exceptions.NotFoundException;
 import com.markergus.mainserver.repository.CustomerRepository;
 import com.markergus.mainserver.repository.DeviceRepository;
+import com.markergus.mainserver.util.client.GenTokenClient;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
 @Service
 public class CustomerService {
@@ -24,10 +24,13 @@ public class CustomerService {
     private final DeviceRepository deviceRepository;
     private final ModelMapper modelMapper;
 
+    private final GenTokenClient genTokenClient;
+
     @Autowired
-    public CustomerService(CustomerRepository customerRepository, DeviceRepository deviceRepository, ModelMapper modelMapper) {
+    public CustomerService(CustomerRepository customerRepository, DeviceRepository deviceRepository, GenTokenClient genTokenClient, ModelMapper modelMapper) {
         this.customerRepository = customerRepository;
         this.deviceRepository = deviceRepository;
+        this.genTokenClient = genTokenClient;
         this.modelMapper = modelMapper;
     }
 
@@ -77,6 +80,24 @@ public class CustomerService {
 
     public Page<CustomerDto> getCustomers(int page) {
         return customerRepository.findAll(Pageable.ofSize(10).withPage(page)).map(customer -> modelMapper.map(customer, CustomerDto.class));
+    }
+
+    public TokenResponseDto generateToken(CustomerIdDto customerIdDto) throws NotFoundException, NoDeviceLinkedException {
+        if (!customerRepository.existsByUserId(customerIdDto.getUserId())) {
+            throw new NotFoundException();
+        }
+        Customer customer = customerRepository.findByUserId(customerIdDto.getUserId());
+        if (customer.getDevice() == null) {
+            throw new NoDeviceLinkedException();
+        }
+
+        GenTokenRequestDto genTokenRequestDto = new GenTokenRequestDto();
+        genTokenRequestDto.setUserId(customer.getUserId());
+        genTokenRequestDto.setDeviceId(customer.getDevice().getDeviceId());
+        Mono<String> result = genTokenClient.submitGenTokenRequest(genTokenRequestDto);
+        TokenResponseDto tokenResponseDto = new TokenResponseDto();
+        tokenResponseDto.setToken(result.block());
+        return tokenResponseDto;
     }
 
 }

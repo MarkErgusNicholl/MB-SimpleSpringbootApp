@@ -1,10 +1,8 @@
 package com.markergus.mainserver.controller;
 
-import com.markergus.mainserver.dto.CustomerCreationDto;
-import com.markergus.mainserver.dto.CustomerDto;
-import com.markergus.mainserver.dto.CustomerUpdateDto;
-import com.markergus.mainserver.dto.LinkDeviceDto;
+import com.markergus.mainserver.dto.*;
 import com.markergus.mainserver.exceptions.DuplicateEntryException;
+import com.markergus.mainserver.exceptions.NoDeviceLinkedException;
 import com.markergus.mainserver.exceptions.NotFoundException;
 import com.markergus.mainserver.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +12,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Entry point for core customer functions
+ */
 @RestController
 @RequestMapping("api/v1/customer")
 public class CustomerController {
@@ -57,5 +58,17 @@ public class CustomerController {
     @GetMapping(value = "/list", params = {"page"})
     public List<CustomerDto> getCustomers(@RequestParam("page") int page) {
         return customerService.getCustomers(page).getContent();
+    }
+
+    @PostMapping(value = "/genToken")
+    public TokenResponseDto generateToken(@RequestBody CustomerIdDto customerIdDto) {
+        System.out.println(customerIdDto.getUserId());
+        try {
+            return customerService.generateToken(customerIdDto);
+        } catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer not found", e);
+        } catch (NoDeviceLinkedException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No device linked to customer", e);
+        }
     }
 }
