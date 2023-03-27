@@ -11,12 +11,19 @@ import org.springframework.stereotype.Service;
 import java.time.LocalTime;
 import java.util.*;
 
+/**
+ * Logging service for request and response interceptors
+ */
 @Service
 @Slf4j
 public class LoggingServiceImpl implements LoggingService {
 
+    private final Gson gson;
+
     @Autowired
-    private Gson gson;
+    public LoggingServiceImpl(Gson gson) {
+        this.gson = gson;
+    }
 
     @Override
     public void displayReq(HttpServletRequest request, Object body) {
