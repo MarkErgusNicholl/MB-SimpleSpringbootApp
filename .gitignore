@@ -6,6 +6,7 @@
 */mvnw
 */.mvn/*
 */mvnw.cmd
+*.log
 
 ### STS ###
 .apt_generated
